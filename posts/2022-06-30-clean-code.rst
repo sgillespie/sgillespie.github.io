@@ -138,7 +138,7 @@ Conclusion
 ----------
 
 It is my opinion that Clean Code transcends programming paradigms. These principals can be
-applied equally to functional programming, after slightly rewording some.
+applied equally to functional programming, after some slightly rewording.
 
 You may notice I left out parts of certain principals, like *Objects and Data* and
 *Classes*.  Mostly, these deal with OO specifics they don't map cleanly to functional
