@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="Cache-Control" content="max-age=86400, must-revalidate" />
+        <title>Sean Gillespie - A Recipe for New Haskell Projects with Nix</title>
+        <link rel="stylesheet" type="text/css" title="hakyll_theme" href="../css/fifthave.css" />
+    </head>
+
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Sean Gillespie</a>
+            </div>
+            <nav>
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../archive.html">Archive</a>
+            </nav>
+        </header>
+
+        <main role="main">
+            <div class="info">
+    Posted on April  4, 2024
+    
+</div>
+
+<h1 id="a-recipe-for-new-haskell-projects-with-nix">A Recipe for New Haskell Projects with Nix</h1>
+<p>How do you start a new Haskell project from scratch? Boilerplates and generators are one
+option, such as <a href="https://kowainik.github.io/projects/summoner">summoner</a>, <a href="https://github.com/fujimura/hi">hi</a>, <a href="https://srid.ca/haskell-template">haskell-template</a>, and many more. However, there are some
+issues with boilerplates. The main disadvantage is that, once started, boilerplates can’t
+be updated. More importantly, I believe it’s important to practice starting new projects
+from scratch.</p>
+<p>Having repeated this exercise many times, a common pattern began to emerge, which will be
+the subject of this article.</p>
+<p>Before diving in, let’s take a look at some of the choices I will make:</p>
+<ul>
+<li>Continuous Integration: <a href="https://docs.github.com/en/actions">GitHub Actions</a></li>
+<li>Nix infrastructure: <a href="https://input-output-hk.github.io/haskell.nix/">haskell.nix</a></li>
+<li>Formatter: <a href="https://github.com/fourmolu/fourmolu">Fourmolu</a></li>
+</ul>
+<p>This means we’ll need to create the following components:</p>
+<ul>
+<li>Cabal Boilerplate</li>
+<li>Nix Flake</li>
+<li>Fourmolu Configuration</li>
+<li>GitHub Actions Workflow</li>
+</ul>
+<h2 id="first-steps">First Steps</h2>
+<p>Start a nix shell with the required tools:</p>
+<pre><code>nix-shell -p haskell.compiler.ghc964</code></pre>
+<p>Create a directory for the new project:</p>
+<pre><code>mkdir -p new-project
+cd new-project
+git init</code></pre>
+<h2 id="generating-cabal-boilerplate">Generating Cabal Boilerplate</h2>
+<p>Earlier I said I don’t like boilerplates, but <code>cabal init</code> is lean enough that there isn’t
+much downside:</p>
+<pre><code>cabal init --no-comments --overwrite</code></pre>
+<p>After answering the questions, we will have a very small cabal project. I will also
+usually add a test library to the <code>*.cabal</code> package for QuickCheck or Hedgehog
+generators:</p>
+<pre><code>library testlib
+  import:           warnings
+  -- exposed-modules:  MyLib
+  -- other-modules:
+  -- other-extensions:
+  build-depends:    base
+  hs-source-dirs:   testlib
+  default-language: Haskell2010</code></pre>
+<p>Create the testlib directory:</p>
+<pre><code>mkdir -p testlib</code></pre>
+<p>Though not required, I recommend adding a cabal.project:</p>
+<pre><code>packages: ./*.cabal
+
+index-state: YYYY-MM-DDT00:00:00Z
+
+tests: True
+test-show-details: direct</code></pre>
+<p>Commit what we have so far:</p>
+<pre><code>git add .
+git commit -m &quot;chore: Add cabal boilerplate&quot;</code></pre>
+<p>Test that it builds:</p>
+<pre><code>cabal build all
+cabal run
+cabal test</code></pre>
+<h2 id="nix-flake">Nix Flake</h2>
+<p>There are many options for using Nix with Haskell: callCabal2Nix, <a href="https://nixos.wiki/wiki/Haskell#Using_developPackage_.28use_the_nix_packages_set_for_haskell.29">developPackage</a>,
+<a href="https://community.flake.parts/haskell-flake">haskell-flake</a>, <a href="https://input-output-hk.github.io/haskell.nix/">haskell.nix</a>, on and on. I usually reach for <a href="https://input-output-hk.github.io/haskell.nix/">haskell.nix</a>, because
+it can easily produce windows cross-builds and fully static linux binaries.</p>
+<p>Create the <code>nix.flake</code>:</p>
+<pre><code>{
+  inputs = {
+    haskellNix.url = &quot;github:input-output-hk/haskell.nix&quot;;
+    nixpkgs.follows = &quot;haskellNix/nixpkgs-unstable&quot;;
+    flake-utils.url = &quot;github:numtide/flake-utils&quot;;
+  };
+
+  outputs = { self, nixpkgs, flake-utils, haskellNix }@attrs:
+    flake-utils.lib.eachSystemDefaultSystem (system:
+      let
+        overlays = [
+          haskellNix.overlay
+
+          (final: prev: {
+            cabalProject =
+              final.haskell-nix.cabalProject' {
+                src = ./.;
+                compiler-nix-name = &quot;ghc964&quot;;
+
+                # This is used by `nix develop .` to open a shell for use with
+                # `cabal`, `hlint` and `haskell-language-server`
+                shell.tools = {
+                  cabal = {};
+                  fourmolu = {};
+                  hlint = {};
+                  haskell-language-server = {};
+                };
+
+                # Non-Haskell shell tools go here
+                shell.buildInputs = with pkgs; [
+                  nixpkgs-fmt
+                ];
+              };
+          })
+        ];
+
+        pkgs = import nixpkgs {
+          inherit system overlays;
+          inherit (haskellNix) config;
+        };
+
+        flake = pkgs.cabalProject.flake { };
+
+      in
+        flake // {
+          # Built by `nix build .`
+          packages.default = flake.packages.&quot;hello:exe:hello&quot;;
+        });
+}</code></pre>
+<p><strong>Important</strong>: Nix will refuse to evaluate a flake unless it’s in the git index. Add
+<code>flake.nix</code>:</p>
+<pre><code>git add flake.nix
+git commit -m &quot;chore: Add cabal and nix boilerplate&quot;</code></pre>
+<p>Make sure everything builds:</p>
+<pre><code>nix develop .
+cabal build
+cabal run
+exit</code></pre>
+<p>This should have generated <code>flake.lock</code>, so let’s add that and commit:</p>
+<pre><code>git add flake.lock
+git commit -m &quot;chore: Add a nix flake&quot;</code></pre>
+<h2 id="fourmolu-configuration">Fourmolu Configuration</h2>
+<p>Generate <code>fourmolu.yaml</code>:</p>
+<pre><code>nix develop -c fourmolu --print-defaults &gt; fourmolu.yaml</code></pre>
+<p>We may as well reformat all sources:</p>
+<pre><code>nix develop -c fourmolu --mode=inplace src app test</code></pre>
+<p>Then tweak it to your preferences, and commit it:</p>
+<pre><code>git add .
+git commit -m &quot;chore: Add fourmolu config&quot;</code></pre>
+<h2 id="github-actions">GitHub Actions</h2>
+<p>I happen to use GitHub, so I also use GitHub Actions. The cachix action is an excellent
+choice, and they have instructions for many more Continuous Integration services.</p>
+<p>Note the workflow below requires a Cachix [free] cache. This could save a lot of time
+building dependencies. Still, you can always omit the <code>cachix/cachix-action</code>.</p>
+<p>Create a workflow at <code>.github/workflows/build.yaml</code>. A good starting point is building the
+executable and running the tests:</p>
+<pre><code>name: Nix Build
+
+on:
+  - push
+  - pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v22
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+          allow-import-from-derivation = true
+          accept-flake-config = true
+    - uses: cachix/cachix-action@v12
+      with:
+        name: &lt;cache-name&gt;
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - name: Build executable
+      run: nix build -L .
+    - name: Run tests
+      run: |
+        nix build -L .#checks.x86_64-linux.&quot;new-project:test:new-project-test&quot;</code></pre>
+<p>Commit the the workflow:</p>
+<pre><code>git add .github
+git commit -m &quot;chore: Add GitHub workflow&quot;</code></pre>
+<h2 id="finishing-up">Finishing Up</h2>
+<p>Finally, push it upstream. The GitHub workflow should automatically run:</p>
+<pre><code>git remote add origin git@github.com:my-user/new-project
+git fetch
+git push -u origin main</code></pre>
+
+        </main>
+
+        <footer>
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </footer>
+    </body>
+</html>
