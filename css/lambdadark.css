@@ -45,19 +45,23 @@ body {
 }
 
 /* Shared styles */
-h1 {
+h1, h2, h3 {
     color: var(--blue);
     font-family: 'Lora', Georgia, serif;
-    font-size: 2rem;
     font-weight: 600;
-    margin: 0 0 0.5rem 0;
+    margin: 2rem 0 2rem 0;
+}
+
+h1 {
+    font-size: 2rem;
 }
 
 h2 {
-    color: var(--blue);
     font-size: 1.5rem;
-    font-weight: 600;
-    padding-bottom: 0.5rem;
+}
+
+p {
+  margin-bottom: 1.5rem;
 }
 
 a {
@@ -75,6 +79,15 @@ header {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     position: relative;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+}
+
+a.header {
+    color: var(--blue);
+    text-decoration: none;
 }
 
 .subtitle {
@@ -109,11 +122,6 @@ header nav a {
     font-weight: 600;
     margin: 0 0 1.5rem 0;
     padding-bottom: 0.5rem;
-}
-
-.posts-header:before {
-    content: '# ';
-    color: var(--fg);
 }
 
 .post-item {
@@ -159,8 +167,6 @@ header nav a {
     font-family: 'SF Mono', monospace;
     font-weight: 500;
     text-decoration: none;
-    // padding: 1rem 0rem;
-    transition: all 0.2s ease;
 }
 
 .archive-link::before {
@@ -174,11 +180,15 @@ header nav a {
 
 div.info {
     color: var(--comment);
-    font-size: 14px;
+    font-size: 1rem;
     font-style: italic;
 }
 
 /* Main article */
+main h1 {
+  margin-top: 0.5rem;
+}
+
 main h1:before {
     color: var(--fg);
     content: '# ';
@@ -221,17 +231,17 @@ code {
 pre {
     background-color: var(--bg_highlight);
     color: var(--fg);
-    padding: 1.5rem;
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
     border-radius: 6px;
     overflow-x: auto;
     font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
     line-height: 1.4;
-    margin: 1.5rem 0;
+    margin: 2rem 0;
     position: relative;
 }
 
 pre::before {
-    content: "∘";
+    content: "❮❯";
     color: var(--fg);
     position: absolute;
     left: 0.5rem;
@@ -267,7 +277,6 @@ pre code {
     font-weight: 500;
     text-decoration: none;
     padding: 0.5rem 0;
-    transition: all 0.2s ease;
     display: inline-block;
 }
 
@@ -278,7 +287,6 @@ pre code {
 
 .back-link:hover {
     color: var(--cyan);
-    padding-left: 0.5rem;
 }
 
 /* Responsive design */
