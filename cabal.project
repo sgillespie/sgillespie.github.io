@@ -1,4 +1,5 @@
-packages: ./*.cabal
+packages:
+    ./.
 index-state: 2025-09-06T18:26:55Z
 tests: True
 test-show-details: direct

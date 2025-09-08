@@ -60,6 +60,10 @@ h2 {
     font-size: 1.5rem;
 }
 
+h3 {
+    font-size: 1.25rem;
+}
+
 p {
   margin-bottom: 1.5rem;
 }
@@ -71,6 +75,57 @@ a {
 
 a:hover {
     color: var(--cyan);
+}
+
+blockquote {
+  padding: 0;
+  margin: 0;
+}
+
+blockquote p {
+    color: var(--fg);
+    font-size: 1rem;
+    margin: 0 0 0 0.5rem;
+}
+
+blockquote p::before {
+    color: var(--comment);
+    content: '> ';
+    margin-right: 0.5rem;
+}
+
+.asterisk::before {
+  color: var(--blue);
+  content: '* ';
+  margin-right: 0.5rem;
+}
+
+ol, ul, li {
+    margin: 0;
+    padding: 0;
+}
+
+ol {
+    padding-left: 1.5rem;
+}
+
+ul {
+    list-style: none;
+};
+
+li {
+   padding-left: 0.5rem; 
+}
+
+ul li::before {
+    color: var(--blue);
+    content: '*'; 
+    margin-right: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+ol li::marker {
+    color: var(--blue);
 }
 
 /* Site header */
@@ -87,21 +142,11 @@ header h1 {
 
 a.header {
     color: var(--blue);
+    font-weight: 600;
     text-decoration: none;
 }
 
-.subtitle {
-    color: var(--fg);
-    font-size: 1rem;
-    margin: 0;
-}
-
-.subtitle:before {
-  color: var(--comment);
-  content: '> ';
-  margin-right: 0.5rem;
-}
-
+/* This still used? */
 header nav {
     text-align: left;
     margin-top: 0.5rem;
@@ -127,17 +172,9 @@ header nav a {
 .post-item {
     margin-bottom: 1.5rem;
     padding: 0.5rem 0;
-    transition: all 0.2s ease;
-}
-
-.post-item:last-of-type {
-    border-bottom: none;
 }
 
 .post-title:before {
-  color: var(--blue);
-  content: '* ';
-  margin-right: 0.5rem;
   text-decoration: none;
 }
 
@@ -151,31 +188,6 @@ header nav a {
     font-size: 0.9rem;
     font-weight: 400;
     margin-left: 1.25rem;
-}
-
- /* Archive link */
-.archive-section {
-    margin-top: 2rem;
-    padding-top: 0;
-    text-align: left;
-    padding-bottom: 1.5rem;
-}
-
-.archive-link {
-    display: inline-block;
-    color: var(--green);
-    font-family: 'SF Mono', monospace;
-    font-weight: 500;
-    text-decoration: none;
-}
-
-.archive-link::before {
-    content: "→ ";
-    margin-right: 0.25rem;
-}
-
-.archive-link:hover {
-    color: var(--cyan);
 }
 
 div.info {
@@ -201,21 +213,10 @@ main h2:before {
     margin-right: 0.5rem;
 }
 
-ul, li {
-    list-style: none;
-    margin:0;
-    padding:0;
-};
-
-li {
-   padding-left: 0.5rem; 
-}
-
-li::before {
-    content: '*'; 
-    color: var(--blue);
+main h3:before {
+    color: var(--fg);
+    content: '### ';
     margin-right: 0.5rem;
-    margin-left: 0.5rem;
 }
 
 /* Code elements */
@@ -267,26 +268,30 @@ pre code {
 
 /* Navigation */
 .post-nav {
-    margin-top: 3rem;
+    margin-top: 2.5rem;
     padding-top: 0;
 }
 
-.back-link {
+.post-nav a {
+    display: inline-block;
     color: var(--green);
     font-family: 'SF Mono', monospace;
     font-weight: 500;
     text-decoration: none;
-    padding: 0.5rem 0;
-    display: inline-block;
+}
+
+.post-nav a:hover {
+    color: var(--cyan);
+}
+
+.archive-link::before {
+    content: "← ";
+    margin-right: 0.25rem;
 }
 
 .back-link::before {
     content: "← ";
     margin-right: 0.5rem;
-}
-
-.back-link:hover {
-    color: var(--cyan);
 }
 
 /* Responsive design */
