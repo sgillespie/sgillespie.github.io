@@ -185,6 +185,10 @@ This post was compiled from several excellent sources:
 
 * `Conventional Commits`_
 * `The Seven Rules`_
-* `Git Commit Good Practice`_
 * `How to Write Better Commit Messages`_
+* `Git Commit Good Practice`_
 
+.. _Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/
+.. _The Seven Rules: https://cbea.ms/git-commit/
+.. _How to Write Better Commit Messages: https://www.freecodecamp.org/news/how-to-write-better-git-commit-messages/
+.. _Git Commit Good Practice: https://wiki.openstack.org/wiki/GitCommitMessages
