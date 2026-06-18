@@ -7,7 +7,7 @@ title: Public Keys
 For commit signing, email, and SSH.
 
  * UID: `Sean D Gillespie <sean@mistersg.net>`
- * Fingerprint: `926E 116E F261 0A88 42CE  6C49 C615 14E3 7CBB B070`
+ * Fingerprint: `C35C 63E8 39C7 CA34 263F  5E48 02E9 A9C5 EF7F 23AB`
  * Download: [sean-gillespie.asc](public-keys/sean-gillespie.asc)
 
 ```
