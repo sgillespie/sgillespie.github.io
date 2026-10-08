@@ -16,7 +16,7 @@ main = hakyllWith config $ do
         route   idRoute
         compile compressCssCompiler
 
-    match "public-keys/*" $ do
+    match "public-keys/**" $ do
         route   idRoute
         compile copyFileCompiler
 

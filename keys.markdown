@@ -6,8 +6,8 @@ title: Public Keys
 
 For commit signing, email, and SSH.
 
- * UID: `Sean D Gillespie <sean@mistersg.net>`
- * Fingerprint: `C35C 63E8 39C7 CA34 263F  5E48 02E9 A9C5 EF7F 23AB`
+ * UID: `Sean Gillespie <sean@mistersg.net>`
+ * Fingerprint: `158F B34C 5543 E688 C0A6  5022 383B 506B 3D66 9229`
  * Download: [sean-gillespie.asc](public-keys/sean-gillespie.asc)
 
 ```
@@ -36,4 +36,26 @@ For mobile use only; not authoritative for anything public.
 
 ```
 gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-android.asc
+```
+
+## Retired And Inactive
+
+### 0x02E9A9C5EF7F23AB
+
+ * UID: `Sean D Gillespie <sean@mistersg.net>`
+ * Fingerprint: `84F9 7C2E DCE6 2BCE 0AA2  15BC 163E D090 7B84 F3E9`
+ * Download: [0x02E9A9C5EF7F23AB.asc](public-keys/retired/0x02E9A9C5EF7F23AB.asc)
+
+```
+gpg --fetch-keys https://sgillespie.github.io/public-keys/retired/0x02E9A9C5EF7F23AB.asc
+```
+
+### 0x163ED0907B84F3E9
+
+ * UID: `Sean D Gillespie <sean@mistersg.net>`, `Sean Gillespie <sgillespie@fanatics.com`
+ * Fingerprint: `84F9 7C2E DCE6 2BCE 0AA2  15BC 163E D090 7B84 F3E9`
+ * Download: [0x163ED0907B84F3E9.asc](public-keys/retired/0x163ED0907B84F3E9.asc)
+
+```
+gpg --fetch-keys https://sgillespie.github.io/public-keys/retired/0x163ED0907B84F3E9.asc
 ```
