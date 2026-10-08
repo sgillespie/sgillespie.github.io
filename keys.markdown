@@ -40,7 +40,7 @@ gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-android
 
 ## Retired And Inactive
 
-### 0x02E9A9C5EF7F23AB
+**0x02E9A9C5EF7F23AB**
 
  * UID: `Sean D Gillespie <sean@mistersg.net>`
  * Fingerprint: `84F9 7C2E DCE6 2BCE 0AA2  15BC 163E D090 7B84 F3E9`
@@ -50,7 +50,7 @@ gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-android
 gpg --fetch-keys https://sgillespie.github.io/public-keys/retired/0x02E9A9C5EF7F23AB.asc
 ```
 
-### 0x163ED0907B84F3E9
+**0x163ED0907B84F3E9**
 
  * UID: `Sean D Gillespie <sean@mistersg.net>`, `Sean Gillespie <sgillespie@fanatics.com`
  * Fingerprint: `84F9 7C2E DCE6 2BCE 0AA2  15BC 163E D090 7B84 F3E9`
