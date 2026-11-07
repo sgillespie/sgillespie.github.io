@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="Cache-Control" content="max-age=86400, must-revalidate" />
+        <title>Sean Gillespie - A Recipe for Managing USB Security Keys</title>
+        <link rel="stylesheet" type="text/css" title="hakyll_theme" href="../css/lambdadark.css" />
+    </head>
+
+    <body>
+        <div class="container">
+          <header>
+              <h1><a href="../" class="header">Sean Gillespie</a></h1>
+              <blockquote>
+                <p>Reflections on Software, Haskell and Functional Programming</p>
+              </blockquote>
+
+              <nav>
+                  <a href="../keys.html">
+                    <img src="https://img.shields.io/badge/OpenPGP-Keys-blue?style=flat-square&logo=gnuprivacyguard&labelColor=3b4261&color=9ece6a" alt="OpenPGP | Keys">
+                    </img>
+                  </a>
+              </nav>
+          </header>
+
+          <main role="main">
+              <div class="info">
+    Posted on November  6, 2026
+    
+</div>
+
+<h1 id="a-recipe-for-managing-usb-security-keys">A Recipe for Managing USB Security Keys</h1>
+<blockquote>
+<p>A guide to back up and renew OpenPGP keys stored on hardware security devices, such as
+YubiKey and Nitrokey.</p>
+</blockquote>
+<p><strong>Table of Contents:</strong></p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#planning">Planning</a></li>
+<li><a href="#creating-the-initial-backup">Creating the Initial Backup</a></li>
+<li><a href="#transferring-keys-to-the-security-device">Transferring Keys to the Security Device</a></li>
+<li><a href="#renewing-subkeys">Renewing Subkeys</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>OpenPGP private keys are stored directly on the device, and there is no way to extract
+them. The approach here will be to make a secure backup on offline storage, then transfer
+the keys to the security device. This guide demonstrates how to make the initial backup,
+transfer the keys to the card, and renew them after expiration.</p>
+<p>There are already excellent guides on this subject (see DrDuh’s <a href="https://github.com/drduh/YubiKey-Guide">Yubikey Guide</a>, <a href="https://docs.nitrokey.com/nitrokeys/features/openpgp-card/overview">Nitrokey
+Documentation</a>, and <a href="https://support.yubico.com/s/article/Using-Your-YubiKey-with-OpenPGP">YubiKey Documentation</a>). However, this recipe takes a slightly
+different approach:</p>
+<p><strong>GNUPGHOME is NOT stored on backup storage</strong>: It’s convenient to place an isolated GPG home
+directory on backup storage, but it gets messy over time. Instead, keys are imported each time
+you mount the backup USB device.</p>
+<p><strong>Keys are stored in a local Git repository</strong>: Storing current keys alongside
+outdated/expired ones (with a date suffix, say <code>private-20261101.key</code>) also gets
+messy over time. Instead, only the current keys are stored in the directory tree, but any
+key can be accessed from git history.</p>
+<p><strong>USB backup storage is written to a local image</strong>: Sometimes when working on USB devices,
+they lose connection, and the whole process has to be restarted. For that reason, the
+device is copied to a local image, then mounted. Afterward, the image is then written back
+to USB media. If the connection is lost, the data is intact. This also makes it easy to
+write multiple backups.</p>
+<div class="note">
+<div class="title">
+<p>Note</p>
+</div>
+<p>This guide assumes you already have key pairs that will be (or already have been)
+transferred to the security key. You should have a certify key, along with subkeys for
+signing, encryption, and authentication. If not, follow the directions in the
+<a href="https://github.com/drduh/YubiKey-Guide">Yubikey Guide</a> or <a href="https://docs.nitrokey.com/nitrokeys/features/openpgp-card/overview">Nitrokey Documentation</a>.</p>
+</div>
+<h2 id="planning"><span class="title-ref">Planning</span></h2>
+<p>Before starting, you need settle on a directory structure for your backup keys. This is
+what I decided on:</p>
+<pre><code>+ personal/                        # Personal identities (sean@mistersg.net)
+  - sean-gillespie.asc             # Public key
+  - sean-gillespie-full.key        # Full secret key (certify and subkeys)
+  - sean-gillespie-subkeys.key     # Secret subkeys (excluding the certify key)
++ work/                            # Work identities (sean@icangroup.co.uk)
+  - sean-gillespie-iog.asc         # Public key
+  - sean-gillespie-iog-full.key    # Full secret key (certify and subkeys)
+  - sean-gillespie-iog-subkeys.key # Secret subkeys (excluding the certify key)
++ retired/                         # All identities no longer used (by &quot;0xlong&quot; keyid)
+  - 0x02E9A9C5EF7F23AB.asc         # Retired public key
+  - 0x02E9A9C5EF7F23AB-full.key    # Retired full secret key
+  - 0x02E9A9C5EF7F23AB-subkeys.key # Retired subkeys</code></pre>
+<p>I also recommend including a <code>README.md</code> with reference instructions on updating keys.</p>
+<h2 id="creating-the-initial-backup"><span class="title-ref">Creating the Initial Backup</span></h2>
+<p>First, insert a USB storage device and locate it:</p>
+<pre><code>lsblk
+
+NAME                           MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+# &lt;-- Snip --&gt;
+sda                              8:0    1  14.6G  0 disk</code></pre>
+<p>This example shows <code>/dev/sda</code>, which we’ll use throughout this guide. Next, securely
+erase it:</p>
+<pre><code>sudo dd if=/dev/zero of=/dev/sda bs=4M status=progress</code></pre>
+<p>Create a new GPT partition table:</p>
+<pre><code>sudo parted /dev/sda
+
+mklabel gpt
+quit</code></pre>
+<p>Reconnect the device and create a partition for storing backups:</p>
+<pre><code>sudo parted /dev/sda
+mkpart ext2 2048s 8G
+quit</code></pre>
+<p>Since we’ll write the encrypted image to tmpfs, I’ve deliberately made it small
+enough to fit in memory.</p>
+<p>Generate a unique passphrase for the LUKS volume:</p>
+<pre><code>nix shell github:sgillespie/gibberish\#gibberish:exe:gibber \
+  --accept-flake-config \
+  --command gibber --digits --capitals --symbols 10
+# Copy one from the list and save it
+export LUKS_PASS='CHANGEME'</code></pre>
+<p>Format the partition using the passphrase from above:</p>
+<pre><code>sudo cryptsetup luksFormat /dev/sda1
+sudo systemd-cryptsetup attach hwkeys /dev/sda1
+sudo mkfs.ext2 /dev/mapper/hwkeys -L hwkeys</code></pre>
+<p>Detach it and create a local image of the encrypted drive:</p>
+<pre><code>sudo systemd-cryptsetup detach hwkeys
+sudo dd bs=4M status=progress conv=fsync oflag=direct \
+  of=&quot;/tmp/hwkeys.img&quot; \
+  if=/dev/sda1</code></pre>
+<p>Unlock and mount the image:</p>
+<pre><code>sudo systemd-cryptsetup attach hwkeys-img /tmp/hwkeys.img
+sudo mount /dev/mapper/hwkeys-img /mnt</code></pre>
+<p>Initialize a local git repository:</p>
+<pre><code>sudo chown -R &quot;$(id -un):$(id -gn)&quot; /mnt
+cd /mnt
+git init
+mkdir personal work retired</code></pre>
+<p>Export your existing keys:</p>
+<pre><code># Personal identities
+gpg --armor --export --output personal/sean-gillespie.asc $KEY_ID
+gpg --armor --export-secret-keys personal/sean-gillespie-full.key $KEY_ID
+gpg --armor --export-secret-subkeys personal/sean-gillespie-subkeys.key $KEY_ID
+
+# Work identities
+gpg --armor --export --output work/sean-gillespie-iog.asc $KEY_ID
+gpg --armor --export-secret-keys work/sean-gillespie-iog-full.key $KEY_ID
+gpg --armor --export-secret-subkeys work/sean-gillespie-iog-subkeys.key $KEY_ID
+
+# Retired/expired identities
+gpg --armor --export --output retired/$KEY_ID.asc $KEY_ID
+gpg --armor --export-secret-keys retired/$KEY_ID-full.key $KEY_ID
+gpg --armor --export-secret-subkeys retired/$KEY_ID-subkeys.key $KEY_ID</code></pre>
+<p>Stage files and commit:</p>
+<pre><code>git add personal work retired
+git commit</code></pre>
+<p>Unmount and write the image to USB media:</p>
+<pre><code>umount /mnt
+sudo systemd-cryptsetup detach hwkeys-img
+
+# Double check this command and make darned sure you are writing to the correct 
+# device!
+sudo dd bs=4M status=progress conv=fsync oflag=direct \
+  if=&quot;/tmp/hwkeys.img&quot; \
+  of=/dev/sda1
+
+# If desired, repeat on another USB storage device 
+sudo dd bs=4M status=progress conv=fsync oflag=direct \
+  if=&quot;/tmp/hwkeys.img&quot; \
+  of=/dev/sdb1</code></pre>
+<p>Make sure you can access the data:</p>
+<pre><code>sudo systemd-cryptsetup attach hwkeys /dev/sda1
+sudo mount /dev/mapper/hwkeys /mnt</code></pre>
+<p>Unmount and lock it when you are done:</p>
+<pre><code>sudo umount /mnt
+sudo systemd-cryptsetup detach hwkeys
+sudo rm /tmp/hwkeys.img</code></pre>
+<h2 id="transferring-keys-to-the-security-device">Transferring Keys to the Security Device</h2>
+<p>The keys are now backed up, so it is safe to transfer your keys to the USB security key.
+Transfer each key:</p>
+<pre><code>gpg --edit-key $KEY_ID
+
+key 1
+keytocard
+key 1
+key 2
+keytocard
+key2
+key3
+keytocard
+save</code></pre>
+<p>Verify private keys are stubs on your keyring:</p>
+<pre><code>gpg --list-secret-keys
+
+sec#  ed25519/0x042E55F6FA3635DD 2026-06-16 [C]
+      Key fingerprint = AE9A 1DFB 1B85 41A0 1AAC  4672 042E 55F6 FA36 35DD
+uid                   [ultimate] Sean Gillespie &lt;sean.gillespie@iohk.io&gt;
+ssb&gt;  ed25519/0xACF66F29D83D1300 2026-06-16 [S] [expires: 2027-06-16]
+ssb&gt;  cv25519/0x0CF906BA2E209653 2026-06-16 [E] [expires: 2027-06-16]
+ssb&gt;  ed25519/0xA673A642F084EB68 2026-06-16 [A] [expires: 2027-06-16]</code></pre>
+<p>Pay special attention to the symbols after <code>sec</code> and <code>ssb</code>. A <code>#</code> indicates the key
+has been taken offline, <code>&gt;</code> indicates is stored on a smartcard.</p>
+<h2 id="renewing-subkeys">Renewing Subkeys</h2>
+<p>After expiration, we will be renewing the subkeys, rather than replacing them. Renewing
+subkeys is much simpler, but may be less secure. Both methods require access to the
+certify key.</p>
+<p>Insert the USB storage device and copy it to a local image:</p>
+<pre><code># Double check this command and make darned sure you aren't overwriting your backup
+# device!
+sudo dd bs=4M status=progress conv=fsync oflag=direct \
+  of=&quot;/tmp/hwkeys.img&quot; \
+  if=/dev/sda1</code></pre>
+<p>Unlock and mount the image:</p>
+<pre><code>sudo systemd-cryptsetup attach hwkeys-img /tmp/hwkeys.img
+sudo mount /dev/mapper/hwkeys-img /mnt</code></pre>
+<p>Create a temporary GPG home:</p>
+<pre><code>export GNUPGHOME=$(mktemp --directory &quot;/run/user/$(id -u)/gpg.XXXX&quot;)
+cp $HOME/.gnupg/gpg.conf $GNUPGHOME</code></pre>
+<p>Import all keys that need to be updated:</p>
+<pre><code>gpg --armor --import personal/sean-gillespie-full.key # Personal identity
+gpg --armor --import work/sean-gillespie-iog-full.key # Work identity</code></pre>
+<p>Reset the expiration:</p>
+<pre><code>gpg --edit-key $KEY_ID
+
+key 1
+key 2
+key 3
+expire
+1y</code></pre>
+<p>Changing expiration does not alter any private keys, so we only need to export the renewed
+public keys:</p>
+<pre><code>gpg --armor --export --output personal/sean-gillespie.asc $KEY_ID # Personal identity
+gpg --armor --export --output work/sean-gillespie-iog.asc $KEY_ID # Work identity</code></pre>
+<p>Commit them:</p>
+<pre><code>git add \*.asc
+git commit</code></pre>
+<p>If you haven’t already, this would be a good time to add a <code>README.md</code>.</p>
+<p>Unmount and write the image to USB media:</p>
+<pre><code>umount /mnt
+sudo systemd-cryptsetup detach hwkeys-img
+
+# Double check this command and make darned sure you are writing to the correct 
+# device!
+sudo dd bs=4M status=progress conv=fsync oflag=direct \
+  if=&quot;/tmp/hwkeys.img&quot; \
+  of=/dev/sda1
+
+# If desired, repeat on another USB storage device 
+sudo dd bs=4M status=progress conv=fsync oflag=direct \
+  if=&quot;/tmp/hwkeys.img&quot; \
+  of=/dev/sdb1</code></pre>
+
+<nav class="post-nav">
+    <a href="../" class="back-link">Back to Posts</a>
+</nav>
+
+<script src="https://giscus.app/client.js" data-repo="sgillespie/sgillespie.github.io" data-repo-id="R_kgDOHjsUew" data-category="Announcements" data-category-id="DIC_kwDOHjsUe84CvHb3" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="catppuccin_mocha" data-lang="en" crossorigin="anonymous" async>
+</script>
+
+          </main>
+
+          <footer>
+              <a href="http://jaspervdj.be/hakyll">
+                  <img src="https://img.shields.io/badge/Built_with-Hakyll-blue?style=flat-square&logo=haskell&labelColor=3b4261&color=7dcfff" alt="OpenPGP | Keys">
+                  </img>
+              </a>
+          </footer>
+        </container>
+    </body>
+</html>
