@@ -163,6 +163,7 @@ Stage files and commit::
 
 Unmount and write the image to USB media::
 
+    cd
     umount /mnt
     sudo systemd-cryptsetup detach hwkeys-img
 
@@ -247,6 +248,7 @@ Create a temporary GPG home::
 
 Import all keys that need to be updated::
 
+    cd /mnt
     gpg --armor --import personal/sean-gillespie-full.key # Personal identity
     gpg --armor --import work/sean-gillespie-iog-full.key # Work identity
 
@@ -275,7 +277,8 @@ If you haven't already, this would be a good time to add a ``README.md``.
 
 Unmount and write the image to USB media::
 
-    umount /mnt
+    cd
+    sudo umount /mnt
     sudo systemd-cryptsetup detach hwkeys-img
 
     # Double check this command and make darned sure you are writing to the correct 

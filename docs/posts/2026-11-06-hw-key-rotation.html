@@ -153,7 +153,8 @@ gpg --armor --export-secret-subkeys retired/$KEY_ID-subkeys.key $KEY_ID</code></
 <pre><code>git add personal work retired
 git commit</code></pre>
 <p>Unmount and write the image to USB media:</p>
-<pre><code>umount /mnt
+<pre><code>cd
+umount /mnt
 sudo systemd-cryptsetup detach hwkeys-img
 
 # Double check this command and make darned sure you are writing to the correct 
@@ -215,7 +216,8 @@ sudo mount /dev/mapper/hwkeys-img /mnt</code></pre>
 <pre><code>export GNUPGHOME=$(mktemp --directory &quot;/run/user/$(id -u)/gpg.XXXX&quot;)
 cp $HOME/.gnupg/gpg.conf $GNUPGHOME</code></pre>
 <p>Import all keys that need to be updated:</p>
-<pre><code>gpg --armor --import personal/sean-gillespie-full.key # Personal identity
+<pre><code>cd /mnt
+gpg --armor --import personal/sean-gillespie-full.key # Personal identity
 gpg --armor --import work/sean-gillespie-iog-full.key # Work identity</code></pre>
 <p>Reset the expiration:</p>
 <pre><code>gpg --edit-key $KEY_ID
@@ -234,7 +236,8 @@ gpg --armor --export --output work/sean-gillespie-iog.asc $KEY_ID # Work identit
 git commit</code></pre>
 <p>If you haven’t already, this would be a good time to add a <code>README.md</code>.</p>
 <p>Unmount and write the image to USB media:</p>
-<pre><code>umount /mnt
+<pre><code>cd
+sudo umount /mnt
 sudo systemd-cryptsetup detach hwkeys-img
 
 # Double check this command and make darned sure you are writing to the correct 
