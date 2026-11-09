@@ -16,14 +16,14 @@ gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie.asc
 
 ## Work
 
-For commit signing, email and SSH on behalf of IOG
+For commit signing, email and SSH on behalf of ICAN Group:
 
- * UID: `Sean Gillespie <sean.gillespie@iohk.io>`
- * Fingerprint: `AE9A 1DFB 1B85 41A0 1AAC  4672 042E 55F6 FA36 35DD`
- * Download [sean-gillespie-iog.asc](public-keys/sean-gillespie-iog.asc)
+ * UID: `Sean Gillespie <sean@icangroup.co.uk>`
+ * Fingerprint: `ADEA D01C 513C 3862 3D5B  8E0A 6EEB 1453 D9A8 5CD1`
+ * Download [sean-gillespie-ican.asc](public-keys/sean-gillespie-ican.asc)
 
 ```
-gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-iog.asc
+gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-ican.asc
 ```
 
 ## Android
@@ -39,6 +39,16 @@ gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-android
 ```
 
 ## Retired And Inactive
+
+**0x042E55F6FA3635DD**
+
+ * UID: `Sean Gillespie <sean.gillespie@iohk.io>`
+ * Fingerprint: `AE9A 1DFB 1B85 41A0 1AAC  4672 042E 55F6 FA36 35DD`
+ * Download [sean-gillespie-iog.asc](public-keys/sean-gillespie-iog.asc)
+
+```
+gpg --fetch-keys https://sgillespie.github.io/public-keys/sean-gillespie-iog.asc
+```
 
 **0x02E9A9C5EF7F23AB**
 
